@@ -1,0 +1,7 @@
+{
+    "version": "2.0.0",
+    "name": "LogicPanel",
+    "description": "Provision hosting accounts on LogicPanel PaaS panel with one-click SSO login.",
+    "author": "cyber-wahid",
+    "logo": "logo.png"
+}

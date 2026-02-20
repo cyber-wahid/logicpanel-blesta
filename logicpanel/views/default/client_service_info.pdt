@@ -1,0 +1,231 @@
+<?php
+/**
+ * LogicPanel — Client Area Service Info
+ * Variables: $account_id, $account_data, $services_data, $databases_data,
+ *            $domains_data, $panel_url, $sso_url, $username, $password,
+ *            $domain, $package, $server_host, $error
+ */
+?>
+<div class="lp-client-area">
+<style>
+.lp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.lp-card { background: transparent; border: 1px solid rgba(128,128,128,0.25); padding: 20px; }
+.lp-card-header { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(128,128,128,0.2); opacity: 0.9; }
+.lp-card-header .lp-icon { color: #3C873A; font-size: 13px; }
+.lp-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,0.12); font-size: 13px; }
+.lp-row:last-child { border-bottom: none; }
+.lp-label { opacity: 0.55; font-weight: 500; }
+.lp-value { font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
+/* Badges */
+.lp-badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid; background: transparent; }
+.lp-active  { border-color: #3C873A; color: #3C873A; }
+.lp-suspended { border-color: #d97706; color: #d97706; }
+.lp-terminated { border-color: #dc2626; color: #dc2626; }
+.lp-neutral { border-color: rgba(128,128,128,0.4); opacity: 0.6; }
+/* Credential */
+.lp-cred { display: flex; align-items: center; gap: 6px; }
+.lp-cred-val { font-family: monospace; font-size: 13px; background: rgba(128,128,128,0.08); border: 1px solid rgba(128,128,128,0.2); padding: 3px 8px; font-weight: 600; }
+.lp-copy { background: transparent; border: 1px solid rgba(128,128,128,0.3); padding: 3px 8px; cursor: pointer; font-size: 11px; opacity: 0.6; transition: all 0.15s; }
+.lp-copy:hover { background: #3C873A; color: #fff !important; border-color: #3C873A; opacity: 1; }
+/* Stats */
+.lp-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.lp-stat { text-align: center; padding: 18px 12px; background: rgba(128,128,128,0.05); border: 1px solid rgba(128,128,128,0.15); }
+.lp-stat-num { font-size: 28px; font-weight: 800; line-height: 1; }
+.lp-stat-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; font-weight: 600; opacity: 0.5; }
+/* SSO button */
+.lp-login-btn { display: inline-flex; align-items: center; gap: 8px; background: #3C873A; color: #fff; border: none; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; transition: background 0.15s; }
+.lp-login-btn:hover { background: #2d6b2b; color: #fff; text-decoration: none; }
+/* Table */
+.lp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lp-table th { padding: 9px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.6; border-bottom: 1px solid rgba(128,128,128,0.25); }
+.lp-table td { padding: 9px 12px; border-bottom: 1px solid rgba(128,128,128,0.1); }
+.lp-table tr:last-child td { border-bottom: none; }
+.lp-empty { text-align: center; padding: 24px; font-size: 13px; opacity: 0.4; }
+.lp-full { grid-column: 1 / -1; }
+.lp-alert { padding: 12px 16px; margin-bottom: 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; border: 1px solid #d97706; border-left: 3px solid #d97706; color: #d97706; }
+.lp-link { color: #3C873A !important; text-decoration: none; font-weight: 600; }
+.lp-link:hover { text-decoration: underline; }
+@media(max-width:768px){ .lp-grid{grid-template-columns:1fr} .lp-stat-grid{grid-template-columns:1fr} }
+</style>
+
+<?php if ($error): ?>
+<div class="lp-alert">&#9888; <?php echo $this->Html->safe($error); ?></div>
+<?php endif; ?>
+
+<?php if (!$error): ?>
+<!-- Login Button -->
+<div style="margin-bottom: 16px;">
+    <a href="<?php echo $this->Html->safe($sso_url); ?>" target="_blank" class="lp-login-btn">
+        &#8594; Login to Panel
+    </a>
+</div>
+<?php endif; ?>
+
+<!-- Row 1: Service Info + Credentials -->
+<div class="lp-grid">
+
+    <div class="lp-card">
+        <div class="lp-card-header"><span class="lp-icon">&#9679;</span> Service Information</div>
+        <?php if ($domain): ?>
+        <div class="lp-row"><span class="lp-label">Domain</span><span class="lp-value"><?php echo $this->Html->safe($domain); ?></span></div>
+        <?php endif; ?>
+        <div class="lp-row"><span class="lp-label">Server</span><span class="lp-value"><?php echo $this->Html->safe($server_host); ?></span></div>
+        <div class="lp-row"><span class="lp-label">Package</span><span class="lp-value"><?php echo $this->Html->safe($package); ?></span></div>
+        <div class="lp-row">
+            <span class="lp-label">Status</span>
+            <span class="lp-value">
+                <?php
+                $status = $account_data['status'] ?? 'pending';
+                $cls = match($status) { 'active' => 'lp-active', 'suspended' => 'lp-suspended', 'terminated' => 'lp-terminated', default => 'lp-neutral' };
+                ?>
+                <span class="lp-badge <?php echo $cls; ?>"><?php echo ucfirst($this->Html->safe($status)); ?></span>
+            </span>
+        </div>
+    </div>
+
+    <div class="lp-card">
+        <div class="lp-card-header"><span class="lp-icon">&#128273;</span> Panel Credentials</div>
+        <div class="lp-row">
+            <span class="lp-label">Username</span>
+            <span class="lp-value">
+                <span class="lp-cred">
+                    <span class="lp-cred-val" id="lp-user"><?php echo $this->Html->safe($username); ?></span>
+                    <button class="lp-copy" onclick="lpCopy('lp-user')">Copy</button>
+                </span>
+            </span>
+        </div>
+        <div class="lp-row">
+            <span class="lp-label">Password</span>
+            <span class="lp-value">
+                <span class="lp-cred">
+                    <span class="lp-cred-val" id="lp-pass"><?php echo $this->Html->safe($password); ?></span>
+                    <button class="lp-copy" onclick="lpCopy('lp-pass')">Copy</button>
+                </span>
+            </span>
+        </div>
+        <div class="lp-row">
+            <span class="lp-label">Panel URL</span>
+            <span class="lp-value">
+                <a href="<?php echo $this->Html->safe($panel_url); ?>" target="_blank" class="lp-link">
+                    <?php echo $this->Html->safe($panel_url); ?> &#8599;
+                </a>
+            </span>
+        </div>
+    </div>
+
+</div>
+
+<!-- Row 2: Usage Stats -->
+<div class="lp-grid">
+    <div class="lp-card lp-full">
+        <div class="lp-card-header"><span class="lp-icon">&#9632;</span> Usage Overview</div>
+        <div class="lp-stat-grid">
+            <div class="lp-stat"><div class="lp-stat-num"><?php echo count($services_data); ?></div><div class="lp-stat-lbl">Applications</div></div>
+            <div class="lp-stat"><div class="lp-stat-num"><?php echo count($databases_data); ?></div><div class="lp-stat-lbl">Databases</div></div>
+            <div class="lp-stat"><div class="lp-stat-num"><?php echo count($domains_data); ?></div><div class="lp-stat-lbl">Domains</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Applications -->
+<?php if (!empty($services_data)): ?>
+<div class="lp-grid">
+    <div class="lp-card lp-full">
+        <div class="lp-card-header"><span class="lp-icon">&#9670;</span> Applications</div>
+        <table class="lp-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Domain</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody>
+            <?php foreach ($services_data as $svc): ?>
+            <tr>
+                <td><strong><?php echo $this->Html->safe($svc['name'] ?? '—'); ?></strong></td>
+                <td><?php echo ucfirst($this->Html->safe($svc['type'] ?? '—')); ?></td>
+                <td><?php echo $this->Html->safe($svc['domain'] ?? '—'); ?></td>
+                <td>
+                    <?php
+                    $s = $svc['status'] ?? '';
+                    $bc = $s === 'running' ? 'lp-active' : ($s === 'stopped' ? 'lp-suspended' : 'lp-neutral');
+                    ?>
+                    <span class="lp-badge <?php echo $bc; ?>"><?php echo $this->Html->safe($s ?: '—'); ?></span>
+                </td>
+                <td><?php echo $this->Html->safe($svc['created_at'] ?? '—'); ?></td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Row 4: Databases + Domains -->
+<div class="lp-grid">
+
+    <div class="lp-card">
+        <div class="lp-card-header"><span class="lp-icon">&#9651;</span> Databases</div>
+        <?php if (!empty($databases_data)): ?>
+        <table class="lp-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Status</th></tr></thead>
+            <tbody>
+            <?php foreach ($databases_data as $db): ?>
+            <tr>
+                <td><strong><?php echo $this->Html->safe($db['name'] ?? '—'); ?></strong></td>
+                <td><?php echo strtoupper($this->Html->safe($db['type'] ?? 'MySQL')); ?></td>
+                <td><span class="lp-badge lp-active"><?php echo $this->Html->safe($db['status'] ?? 'Active'); ?></span></td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php else: ?>
+        <div class="lp-empty">No databases created yet</div>
+        <?php endif; ?>
+    </div>
+
+    <div class="lp-card">
+        <div class="lp-card-header"><span class="lp-icon">&#9752;</span> Domains</div>
+        <?php if (!empty($domains_data)): ?>
+        <table class="lp-table">
+            <thead><tr><th>Domain</th><th>Type</th><th>SSL</th></tr></thead>
+            <tbody>
+            <?php foreach ($domains_data as $dom): ?>
+            <tr>
+                <td><strong><?php echo $this->Html->safe($dom['name'] ?? '—'); ?></strong></td>
+                <td><?php echo ucfirst($this->Html->safe($dom['type'] ?? 'Primary')); ?></td>
+                <td>
+                    <?php if (!empty($dom['ssl_enabled'])): ?>
+                        <span class="lp-badge lp-active">Active</span>
+                    <?php else: ?>
+                        <span class="lp-badge lp-neutral">—</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php else: ?>
+        <div class="lp-empty">No domains added yet</div>
+        <?php endif; ?>
+    </div>
+
+</div>
+
+</div>
+<script>
+function lpCopy(id) {
+    var el = document.getElementById(id);
+    navigator.clipboard.writeText(el.innerText).then(function() {
+        var btn = el.nextElementSibling;
+        var orig = btn.innerText;
+        btn.innerText = '✓';
+        btn.style.background = '#3C873A';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#3C873A';
+        btn.style.opacity = '1';
+        setTimeout(function() {
+            btn.innerText = orig;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.style.opacity = '';
+        }, 1500);
+    });
+}
+</script>
