@@ -231,7 +231,7 @@ This module is provided as-is for use with LogicPanel hosting platform.
 ## Author
 
 **cyber-wahid**  
-Website: https://cyberwahid.site/
+Website: https://logicdock.cloud/
 
 ---
 
